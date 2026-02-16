@@ -3,7 +3,7 @@ services:
   - type: web
     name: borsatakip-api
     runtime: docker
-    repo: https://github.com/YOUR_GITHUB_USERNAME/borsatakip # User will need to update this or generic "current repo" if connected via UI
+    repo: https://github.com/yildizkonaklari/brstkp
     rootDir: apps/api
     plan: free
     envVars:
