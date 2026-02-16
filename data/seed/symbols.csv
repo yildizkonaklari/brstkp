@@ -1,0 +1,27 @@
+symbol,name,sector,is_active,list_start_date
+THYAO,Turk Hava Yollari,Ulastirma,True,2010-01-01
+GARAN,Garanti Bankasi,Banka,True,2010-01-01
+ASELS,Aselsan,Savunma,True,2010-01-01
+KCHOL,Koc Holding,Holding,True,2010-01-01
+BIMAS,BIM Magazalar,Perakende,True,2010-01-01
+AKBNK,Akbank,Banka,True,2010-01-01
+TUPRS,Tupras,Petrol,True,2010-01-01
+SISE,Sise Cam,Sanayi,True,2010-01-01
+EREGL,Eregli Demir Celik,Sanayi,True,2010-01-01
+SAHOL,Sabanci Holding,Holding,True,2010-01-01
+ISCTR,Is Bankasi C,Banka,True,2010-01-01
+YKBNK,Yapi Kredi Bank,Banka,True,2010-01-01
+FROTO,Ford Otosan,Otomotiv,True,2010-01-01
+TOASO,Tofas Oto,Otomotiv,True,2010-01-01
+PETKM,Petkim,Kimya,True,2010-01-01
+TCELL,Turkcell,Iletisim,True,2010-01-01
+TTKOM,Turk Telekom,Iletisim,True,2010-01-01
+KOZAL,Koza Altin,Madencilik,True,2010-01-01
+PGSUS,Pegasus,Ulastirma,True,2013-01-01
+HEKTS,Hektas,Kimya,True,2010-01-01
+SASA,Sasa Polyester,Kimya,True,2010-01-01
+ENKAI,Enka Insaat,Insaat,True,2010-01-01
+ARCLK,Arcelik,Dayanikli Tuk,True,2010-01-01
+VESTL,Vestel,Dayanikli Tuk,True,2010-01-01
+EKGYO,Emlak Konut,GYO,True,2010-12-01
+XU100,BIST 100 Index,Index,True,2010-01-01
