@@ -10,10 +10,11 @@ import os
 router = APIRouter()
 
 # MVP: Hardcoded path or from env
-CSV_DIR = os.path.abspath(os.path.join(os.getcwd(), "../../../data/seed")) 
-# NOTE: In Docker this path might be different (/app/data/seed). 
-# But for now we use relative from execution context or config.
-# Let's trust env or default.
+# In Docker, we copied data to /app/data/seed
+CSV_DIR = "/app/data/seed"
+if not os.path.exists(CSV_DIR):
+    # Local fallback
+    CSV_DIR = os.path.abspath(os.path.join(os.getcwd(), "../../../data/seed"))
 
 @router.post("/import/seed", response_model=Message)
 async def import_seed_data(db: AsyncSession = Depends(get_db)):
