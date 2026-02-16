@@ -122,108 +122,113 @@ async def import_yahoo_data(
     """
     Import last N days of data from Yahoo Finance for all active symbols in DB.
     """
-    from datetime import date, timedelta
-    from app.services.data_provider import YahooFinanceProvider
-    from app.models import Symbol, PriceDaily, IndexDaily
-    
-    end_date = date.today()
-    start_date = end_date - timedelta(days=days)
-    
-    provider = YahooFinanceProvider()
-    
-    # 1. Get Symbols from DB
-    # If DB is empty, maybe try to seed symbols first?
-    stmt = select(Symbol).where(Symbol.is_active == True)
-    result = await db.execute(stmt)
-    db_symbols = result.scalars().all()
-    
-    if not db_symbols:
-        # Fallback: Try to load from CSV seed to get symbol list, then fetch prices
-        # Or return error
-        return {"message": "No symbols found in DB. Please run /import/seed first to populate symbol list."}
-
-    count = 0
-    updated_symbols = 0
-    
-    import pandas as pd
-    
-    # Process symbols
-    # TODO: Async/Parallelize this for speed? Yahoo might rate limit. Serial is safer for now.
-    for sym in db_symbols:
-        try:
-            df = provider.get_daily_ohlcv(sym.symbol, start_date, end_date)
-            if df.empty:
-                continue
-                
-            # Save to DB
-            # For efficiency, we should probably delete existing range and re-insert 
-            # OR check existence. For MVP updater, let's just insert missing.
-            # But checking every row is slow.
-            # Faster approach: Get all existing dates for this symbol in range
-            # Then filter DF.
-            
-            existing_dates_stmt = select(PriceDaily.date).where(
-                (PriceDaily.symbol == sym.symbol) & 
-                (PriceDaily.date >= start_date)
-            )
-            res = await db.execute(existing_dates_stmt)
-            existing_dates = set(res.scalars().all())
-            
-            rows_to_add = []
-            for dt, row in df.iterrows():
-                if dt.date() in existing_dates:
-                    continue
-                    
-                p = PriceDaily(
-                    symbol=sym.symbol,
-                    date=dt.date(),
-                    open=row['open'],
-                    high=row['high'],
-                    low=row['low'],
-                    close=row['close'],
-                    volume=int(row['volume']),
-                    turnover_tl=row.get('turnover_tl'),
-                    adj_close=row.get('adj_close')
-                )
-                rows_to_add.append(p)
-            
-            if rows_to_add:
-                db.add_all(rows_to_add)
-                count += len(rows_to_add)
-                updated_symbols += 1
-                
-        except Exception as e:
-            print(f"Error fetching {sym.symbol}: {e}")
-            continue
-
-    await db.commit()
-    
-    # 2. Update Index (XU100)
+    import traceback
     try:
-        df_idx = provider.get_index_daily("XU100", start_date, end_date)
-        if not df_idx.empty:
-            existing_dates_stmt = select(IndexDaily.date).where(IndexDaily.date >= start_date)
-            res = await db.execute(existing_dates_stmt)
-            existing_dates = set(res.scalars().all())
-            
-            rows_to_add = []
-            for dt, row in df_idx.iterrows():
-                if dt.date() in existing_dates:
+        from datetime import date, timedelta
+        from app.services.data_provider import YahooFinanceProvider
+        from app.models import Symbol, PriceDaily, IndexDaily
+        
+        end_date = date.today()
+        start_date = end_date - timedelta(days=days)
+        
+        provider = YahooFinanceProvider()
+        
+        # 1. Get Symbols from DB
+        # If DB is empty, maybe try to seed symbols first?
+        stmt = select(Symbol).where(Symbol.is_active == True)
+        result = await db.execute(stmt)
+        db_symbols = result.scalars().all()
+        
+        if not db_symbols:
+            # Fallback: Try to load from CSV seed to get symbol list, then fetch prices
+            # Or return error
+            return {"message": "No symbols found in DB. Please run /import/seed first to populate symbol list."}
+
+        count = 0
+        updated_symbols = 0
+        
+        import pandas as pd
+        
+        # Process symbols
+        # TODO: Async/Parallelize this for speed? Yahoo might rate limit. Serial is safer for now.
+        for sym in db_symbols:
+            try:
+                df = provider.get_daily_ohlcv(sym.symbol, start_date, end_date)
+                if df.empty:
                     continue
                     
-                i = IndexDaily(
-                    date=dt.date(),
-                    close=row['close']
-                )
-                rows_to_add.append(i)
+                # Save to DB
+                # For efficiency, we should probably delete existing range and re-insert 
+                # OR check existence. For MVP updater, let's just insert missing.
+                # But checking every row is slow.
+                # Faster approach: Get all existing dates for this symbol in range
+                # Then filter DF.
                 
-            if rows_to_add:
-                db.add_all(rows_to_add)
-                await db.commit()
-    except Exception as e:
-        print(f"Error fetching Index: {e}")
+                existing_dates_stmt = select(PriceDaily.date).where(
+                    (PriceDaily.symbol == sym.symbol) & 
+                    (PriceDaily.date >= start_date)
+                )
+                res = await db.execute(existing_dates_stmt)
+                existing_dates = set(res.scalars().all())
+                
+                rows_to_add = []
+                for dt, row in df.iterrows():
+                    if dt.date() in existing_dates:
+                        continue
+                        
+                    p = PriceDaily(
+                        symbol=sym.symbol,
+                        date=dt.date(),
+                        open=row['open'],
+                        high=row['high'],
+                        low=row['low'],
+                        close=row['close'],
+                        volume=int(row['volume']),
+                        turnover_tl=row.get('turnover_tl'),
+                        adj_close=row.get('adj_close')
+                    )
+                    rows_to_add.append(p)
+                
+                if rows_to_add:
+                    db.add_all(rows_to_add)
+                    count += len(rows_to_add)
+                    updated_symbols += 1
+                    
+            except Exception as e:
+                print(f"Error fetching {sym.symbol}: {e}")
+                continue
 
-    return {"message": f"Yahoo Import complete. Updated {updated_symbols} symbols, added {count} price rows."}
+        await db.commit()
+        
+        # 2. Update Index (XU100)
+        try:
+            df_idx = provider.get_index_daily("XU100", start_date, end_date)
+            if not df_idx.empty:
+                existing_dates_stmt = select(IndexDaily.date).where(IndexDaily.date >= start_date)
+                res = await db.execute(existing_dates_stmt)
+                existing_dates = set(res.scalars().all())
+                
+                rows_to_add = []
+                for dt, row in df_idx.iterrows():
+                    if dt.date() in existing_dates:
+                        continue
+                        
+                    i = IndexDaily(
+                        date=dt.date(),
+                        close=row['close']
+                    )
+                    rows_to_add.append(i)
+                    
+                if rows_to_add:
+                    db.add_all(rows_to_add)
+                    await db.commit()
+        except Exception as e:
+            print(f"Error fetching Index: {e}")
+
+        return {"message": f"Yahoo Import complete. Updated {updated_symbols} symbols, added {count} price rows."}
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 @router.post("/compute", response_model=Message)
