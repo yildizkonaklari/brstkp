@@ -12,6 +12,7 @@ redis>=4.5.0
 apscheduler>=3.10.0
 structlog>=23.1.0
 python-multipart>=0.0.6
+yfinance>=0.2.0
 ta-lib-bin; sys_platform == 'win32'
 # For non-windows, ta-lib might need system dependencies. 
 # We will use pandas/numpy for calculations in MVP to avoid complexity if possible, 

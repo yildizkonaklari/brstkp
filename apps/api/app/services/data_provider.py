@@ -106,3 +106,77 @@ class CSVDataProvider(DataProvider):
             
         df.set_index('date', inplace=True)
         return df[['close']].sort_index()
+
+class YahooFinanceProvider(DataProvider):
+    def __init__(self):
+        import yfinance as yf
+        self.yf = yf
+        
+    def get_symbols(self) -> List[SymbolInfo]:
+        # Yahoo doesn't provide a "list of all symbols" easily. 
+        # We must rely on an external list or the seed CSV to know WHAT to fetch.
+        # For this implementation, we return empty info and expect the caller 
+        # to provide the symbol list from another source (like database or seed csv).
+        return []
+
+    def get_daily_ohlcv(self, symbol: str, start_date: date, end_date: date) -> pd.DataFrame:
+        # BIST symbols on Yahoo end with .IS
+        ticker = f"{symbol}.IS" if not symbol.endswith(".IS") else symbol
+        
+        df = self.yf.download(ticker, start=start_date, end=end_date, progress=False, auto_adjust=True)
+        
+        if df.empty:
+            return pd.DataFrame()
+            
+        # Yahoo columns: Open, High, Low, Close, Volume
+        # Rename to lowercase
+        df.reset_index(inplace=True)
+        df.rename(columns={
+            'Date': 'date',
+            'Open': 'open',
+            'High': 'high',
+            'Low': 'low',
+            'Close': 'close',
+            'Volume': 'volume'
+        }, inplace=True)
+        
+        # Determine active date range
+        mask = (df['date'].dt.date >= start_date) & (df['date'].dt.date <= end_date)
+        df = df.loc[mask].copy()
+
+        if df.empty:
+            return pd.DataFrame()
+
+        df.set_index('date', inplace=True)
+        
+        # Handle 'Adj Close' if present, but auto_adjust=True usually gives adjusted in Close
+        # Let's simulate turnover_tl approx as close * volume
+        df['turnover_tl'] = df['close'] * df['volume']
+        df['adj_close'] = df['close']
+        
+        return df[['open', 'high', 'low', 'close', 'volume', 'turnover_tl', 'adj_close']].sort_index()
+
+    def get_index_daily(self, index_name: str, start_date: date, end_date: date) -> pd.DataFrame:
+        # XU100 is XU100.IS on Yahoo
+        if index_name == "XU100":
+            ticker = "XU100.IS"
+        else:
+            ticker = f"{index_name}.IS"
+            
+        df = self.yf.download(ticker, start=start_date, end=end_date, progress=False, auto_adjust=True)
+        
+        if df.empty:
+            return pd.DataFrame()
+            
+        df.reset_index(inplace=True)
+        df.rename(columns={'Date': 'date', 'Close': 'close'}, inplace=True)
+        
+        mask = (df['date'].dt.date >= start_date) & (df['date'].dt.date <= end_date)
+        df = df.loc[mask].copy()
+        
+        if df.empty:
+            return pd.DataFrame()
+
+        df.set_index('date', inplace=True)
+        return df[['close']].sort_index()
+
