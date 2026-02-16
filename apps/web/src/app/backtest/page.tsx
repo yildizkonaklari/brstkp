@@ -36,7 +36,10 @@ export default function BacktestPage() {
             return res.data
         },
         enabled: !!lastRunId,
-        refetchInterval: (data) => (data?.status === 'PENDING' || data?.status === 'RUNNING') ? 1000 : false
+        refetchInterval: (query) => {
+            const data = query.state.data as any
+            return (data?.status === 'PENDING' || data?.status === 'RUNNING') ? 1000 : false
+        }
     })
 
     return (
