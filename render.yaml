@@ -11,11 +11,7 @@ services:
         fromDatabase:
           name: borsatakip-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: borsatakip-redis
-          property: connectionString
+
       - key: PORT
         value: 8000
     autoDeploy: true
