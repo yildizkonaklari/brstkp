@@ -44,3 +44,8 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(data.router, prefix=f"{settings.API_V1_STR}/data", tags=["Data"])
 app.include_router(signals.router, prefix=f"{settings.API_V1_STR}/signals", tags=["Signals"])
 app.include_router(backtest.router, prefix=f"{settings.API_V1_STR}/backtest", tags=["Backtest"])
+
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+

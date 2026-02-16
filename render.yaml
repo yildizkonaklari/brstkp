@@ -14,6 +14,7 @@ services:
 
       - key: PORT
         value: 8000
+    healthCheckPath: /healthz
     autoDeploy: true
 
   # Redis (Optional: Render Free Tier doesn't support Redis, might need to omit or use external)
