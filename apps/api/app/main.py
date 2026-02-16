@@ -12,8 +12,18 @@ setup_logging()
 async def lifespan(app: FastAPI):
     # Startup
     import structlog
+    from app.database import engine, Base
+    # Import models so they are registered in Base
+    from app import models 
+    
     log = structlog.get_logger()
     log.info("Application starting up...", version=settings.VERSION)
+    
+    async with engine.begin() as conn:
+        # Create tables
+        # In production with Alembic, we might not want this, but for MVP it's fine.
+        await conn.run_sync(Base.metadata.create_all)
+        
     yield
     # Shutdown
     log.info("Application shutting down...")
