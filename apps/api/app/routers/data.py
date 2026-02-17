@@ -151,20 +151,15 @@ async def import_yahoo_data(
         import pandas as pd
         
         # Process symbols
-        # TODO: Async/Parallelize this for speed? Yahoo might rate limit. Serial is safer for now.
+        errors = []
         for sym in db_symbols:
             try:
                 df = provider.get_daily_ohlcv(sym.symbol, start_date, end_date)
                 if df.empty:
+                    errors.append(f"{sym.symbol}: Empty DataFrame (Ticker: {sym.symbol}.IS)")
                     continue
                     
                 # Save to DB
-                # For efficiency, we should probably delete existing range and re-insert 
-                # OR check existence. For MVP updater, let's just insert missing.
-                # But checking every row is slow.
-                # Faster approach: Get all existing dates for this symbol in range
-                # Then filter DF.
-                
                 existing_dates_stmt = select(PriceDaily.date).where(
                     (PriceDaily.symbol == sym.symbol) & 
                     (PriceDaily.date >= start_date)
@@ -194,14 +189,17 @@ async def import_yahoo_data(
                     db.add_all(rows_to_add)
                     count += len(rows_to_add)
                     updated_symbols += 1
+                else:
+                    errors.append(f"{sym.symbol}: No new rows to add")
                     
             except Exception as e:
-                print(f"Error fetching {sym.symbol}: {e}")
+                errors.append(f"{sym.symbol}: {str(e)}")
                 continue
 
         await db.commit()
         
         # 2. Update Index (XU100)
+        index_status = "Skipped"
         try:
             df_idx = provider.get_index_daily("XU100", start_date, end_date)
             if not df_idx.empty:
@@ -223,10 +221,19 @@ async def import_yahoo_data(
                 if rows_to_add:
                     db.add_all(rows_to_add)
                     await db.commit()
+                    index_status = f"Updated {len(rows_to_add)} rows"
+                else:
+                    index_status = "No new rows"
+            else:
+                index_status = "Empty DataFrame"
         except Exception as e:
-            print(f"Error fetching Index: {e}")
+            index_status = f"Error: {e}"
 
-        return {"message": f"Yahoo Import complete. Updated {updated_symbols} symbols, added {count} price rows."}
+        return {
+            "message": f"Yahoo Import complete. Updated {updated_symbols} symbols, added {count} price rows.",
+            "debug_errors": errors[:20], # Show first 20 errors
+            "index_status": index_status
+        }
     except Exception as e:
         error_msg = traceback.format_exc()
         raise HTTPException(status_code=500, detail=error_msg)
