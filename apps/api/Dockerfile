@@ -12,12 +12,13 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY apps/api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy seed data
-COPY ../../data/seed /app/data/seed
+COPY data/seed /app/data/seed
 
-COPY . .
+# Copy app code
+COPY apps/api .
 
 CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"

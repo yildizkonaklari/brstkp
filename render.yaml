@@ -4,7 +4,8 @@ services:
     name: borsatakip-api
     runtime: docker
     repo: https://github.com/yildizkonaklari/brstkp
-    rootDir: apps/api
+    rootDir: .
+    dockerfilePath: apps/api/Dockerfile
     plan: free
     envVars:
       - key: DATABASE_URL
