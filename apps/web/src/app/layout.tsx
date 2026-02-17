@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import Link from 'next/link'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
     title: 'BorsaTakip Analyst',
@@ -18,7 +15,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className="dark">
-            <body className={inter.className}>
+            <body className="min-h-screen bg-background font-sans antialiased">
                 <Providers>
                     <div className="min-h-screen flex flex-col">
                         <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

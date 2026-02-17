@@ -21,7 +21,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-muted-foreground">Welcome back. Here is today's market overview.</p>
+                    <p className="text-muted-foreground">Welcome back. Here is today&apos;s market overview.</p>
                 </div>
                 <div className="flex gap-2">
                     <Link href="/backtest">
@@ -59,7 +59,7 @@ export default function Home() {
             <div className="grid gap-4 md:grid-cols-7">
                 <Card className="col-span-4">
                     <CardHeader>
-                        <CardTitle>Today's Top 10</CardTitle>
+                        <CardTitle>Today&apos;s Top 10</CardTitle>
                         <CardDescription>
                             Highest potential signals generated for {signal?.date || 'today'}
                         </CardDescription>
